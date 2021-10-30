@@ -1,0 +1,63 @@
+{
+  "name": "root",
+  "private": true,
+  "devDependencies": {
+    "@commitlint/cli": "^11.0.0",
+    "@commitlint/config-conventional": "^11.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
+    "codecov": "^3.8.3",
+    "eslint": "^7.26.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "execa": "^5.0.0",
+    "glob": "^7.1.6",
+    "husky": "^4.3.0",
+    "lerna": "^4.0.0",
+    "make-dir": "^3.1.0",
+    "nyc": "^15.1.0",
+    "prettier": "^2.3.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "^9.1.1",
+    "typescript": "~4.2.4"
+  },
+  "workspaces": [
+    "modules/*"
+  ],
+  "scripts": {
+    "postinstall": "lerna run build --stream",
+    "gen-drone": "chmod 0666 .drone.yml && drone jsonnet --stream && drone sign BitGo/BitGoJS --save && chmod 0444 .drone.yml",
+    "audit": "yarn audit --group dependencies optionalDependencies peerDependencies ; test $? -lt 8",
+    "audit-dev": "yarn audit --group devDependencies ; test $? -lt 8",
+    "lint": "lerna run lint --stream",
+    "lint-changed": "lerna run lint --since origin/${DRONE_REPO_BRANCH:-master}..${DRONE_COMMIT:-HEAD} --stream",
+    "unit-test-changed": "lerna run unit-test --since origin/${DRONE_REPO_BRANCH:-master}..${DRONE_COMMIT:-HEAD} --stream --parallel",
+    "browser-tests": "lerna run --scope @bitgo/account-lib compile && lerna run --scope bitgo compile && lerna run --scope bitgo browser-test",
+    "gen-coverage-changed": "lerna run gen-coverage --since origin/${DRONE_REPO_BRANCH:-master}..${DRONE_COMMIT:-HEAD} --stream --parallel",
+    "coverage-changed": "lerna run upload-coverage --since origin/${DRONE_REPO_BRANCH:-master}..${DRONE_COMMIT:-HEAD} --stream --parallel --",
+    "unit-test": "lerna run unit-test --stream --parallel",
+    "integration-test": "lerna run integration-test --stream --parallel",
+    "coverage": "yarn gen-coverage && yarn upload-coverage",
+    "gen-coverage": "node merge-coverage-reports.js && nyc report --reporter=text-lcov > coverage.lcov",
+    "upload-coverage": "codecov -f coverage.lcov -t \"$CODECOV_TOKEN\" -F \"${CODECOV_FLAG:-flag-not-set}\"",
+    "artifacts": "lerna run upload-artifacts --stream --parallel",
+    "upload-docs": "lerna run upload-docs --stream --parallel",
+    "gen-docs": "lerna run gen-docs --stream --parallel",
+    "check-fmt-changed": "lerna run check-fmt --since origin/${DRONE_REPO_BRANCH:-master}..${DRONE_COMMIT:-HEAD} --stream --parallel",
+    "check-fmt": "lerna run check-fmt --stream --parallel",
+    "check-commits": "yarn commitlint --from=origin/${DRONE_REPO_BRANCH:-master} -V",
+    "check-versions": "node ./check-package-versions.js"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lerna run --stream --parallel precommit"
+    }
+  },
+  "resolutions": {
+    "axios": "^0.21.2",
+    "elliptic": "^6.5.4",
+    "normalize-url": "^6.0.1",
+    "trim-newlines": "^3.0.0",
+    "underscore": "^1.12.1"
+  }
+}
